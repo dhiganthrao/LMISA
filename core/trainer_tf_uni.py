@@ -87,6 +87,8 @@ class Trainer:
                     feed_dict_MRI = train_provider_MRI_w(mini_batch_size)
                     feed_dict_CT_lab = train_provider_CT_t_w(mini_batch_size)
 
+                    print(type(feed_dict_CT))
+
                     # savepath = 'D:/TensorFlow/WGAN_latent/test/'
                     #
                     # lab = feed_dict_CT_lab['_lab.nii.gz']

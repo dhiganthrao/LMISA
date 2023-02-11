@@ -68,6 +68,7 @@ def dice_coefficient(pred, gt, epsilon=1e-9, ignore_nan=False):
         2 * tp / (2*tp + fp + fn)
     """
     axis = tuple(range(1, np.ndim(pred) - 1))# if np.ndim(pred) > 1 else -1
+    # print(pred.shape)
     intersection = np.sum(pred * gt, axis)
     sum_ = np.sum(pred + gt, axis)
     dice = 2 * intersection / (sum_ + epsilon)

@@ -1,11 +1,12 @@
-clear all;
-close all;
+%clear all;
+%close all;
 tic
-folder2='D:\TensorFlow\Data\WristXray\GM_Sum\CT\validationCT\';
-pathDir1='D:\TensorFlow\Data\WristXray\CT\validationCT\';
-Files=dir([pathDir1 '*_org.nii.gz']);
-for k=1:length(Files)
+folder2='/home/padamnoo/Desktop/Repositories/LMISA/MLNGM/MMW/MRI/';
+pathDir1='/home/padamnoo/Desktop/Data/MMW/mr_train/';
 
+Files=dir(pathDir1);
+for k=3:length(Files)
+    disp("Starting");
     FileNames=Files(k).name;
     
     Si = load_nii([pathDir1 FileNames]);
@@ -59,7 +60,9 @@ for k=1:length(Files)
 toc
     FileNamesN = erase(FileNames,'.gz');
     name_img=[folder2 FileNamesN];
+    disp(name_img);
     niftiwrite(double(mulGM), name_img)
     gzip(name_img)
+    disp("END");
 end
 

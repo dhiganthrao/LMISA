@@ -17,7 +17,7 @@ from model.gan_10k import Generator, Discriminator
 import timeit
 tf.config.experimental_run_functions_eagerly(True)
 start = timeit.default_timer()
-epochs = 1
+epochs = 15
 batch_size = 1
 mini_batch_size = 1
 eval_batch_size = 1
@@ -55,12 +55,18 @@ saved_filelists = data_path + '/' + saved_filelists
 # file_mat = sio.loadmat(saved_filelists)
 
 # load filenames
-data_path = '.'
-train_list_CT = glob.glob(data_path + '/trainCT/*_img.png')
-valid_list_CT = glob.glob(data_path + '/validationCT/*_img.png')
-train_list_MRI = glob.glob(data_path + '/trainMRI/*_img.png')
-valid_list_MRI = glob.glob(data_path + '/validationMRI/*_img.png')
-test_list = glob.glob(data_path + '/test/*_img.png')
+data_path = '/home/padamnoo/Desktop/Data/ModelDataPreprocessedResized/'
+# data_path = '/home/padamnoo/Desktop/Data/CardiacModelDataPreprocessedResized/'
+train_list_T1 = glob.glob(data_path + 'train/T1/*')
+valid_list_T1 = glob.glob(data_path + 'valid/T1/*')
+train_list_T2 =glob.glob(data_path + 'train/T2/*')
+valid_list_T2 = glob.glob(data_path + 'valid/T2/*')
+
+# train_list_T1 = glob.glob(data_path + 'train/CT/*')
+# valid_list_T1 = glob.glob(data_path + 'valid/CT/*')
+# train_list_T2 =glob.glob(data_path + 'train/CT/*')
+# valid_list_T2 = glob.glob(data_path + 'valid/CT/*')
+test_list = glob.glob(data_path + '/test/T1/*_img.png')
 
 # set key for input images and labels
 org_suffix = '_img.png'
@@ -73,60 +79,67 @@ pre = {org_suffix: [ 'zero-mean', ('channelcheck', 1)],
 pre_ = {org_suffix: [ 'zero-mean', ('channelcheck', 1)],
         lab_suffix: [('one-hot', [0, 63, 127, 191, 255]), ('channelcheck', 5)]
        }
+# pre = {org_suffix: [ 'min_max_sample', ('channelcheck', 1)],
+#        lab_suffix: [('one-hot', [0, 63, 127, 191, 255]), ('channelcheck', 5)]
+#        }
+
+# pre_ = {org_suffix: [ 'min_max_sample', ('channelcheck', 1)],
+#         lab_suffix: [('one-hot', [0, 63, 127, 191, 255]), ('channelcheck', 5)]
+#        }
 
 processor = SimpleImageProcessor(pre=pre)
 processor_no_p = SimpleImageProcessor(pre=pre_)
 
-train_provider_CT_t = DataProvider(train_list_CT, [org_suffix, lab_suffix],
+train_provider_T1_t = DataProvider(train_list_T1, [org_suffix, lab_suffix],
                         is_pre_load=False,
                         is_shuffle=True,
                         # temp_dir=output_path,
                         processor=processor)
 
-valid_provider_CT_t = DataProvider(valid_list_CT, [org_suffix, lab_suffix],
+valid_provider_T1_t = DataProvider(valid_list_T1, [org_suffix, lab_suffix],
                         is_pre_load=False,
                         # temp_dir=output_path,
                         processor=processor)
 
-train_provider_CT = DataProvider(train_list_CT, [org_suffix],
-                        is_pre_load=False,
-                        is_shuffle=True,
-                        # temp_dir=output_path,
-                        processor=processor)
-
-valid_provider_CT = DataProvider(valid_list_CT, [org_suffix],
-                        is_pre_load=False,
-                        # temp_dir=output_path,
-                        processor=processor)
-
-train_provider_MRI = DataProvider(train_list_MRI, [org_suffix],
+train_provider_T1 = DataProvider(train_list_T1, [org_suffix],
                         is_pre_load=False,
                         is_shuffle=True,
                         # temp_dir=output_path,
                         processor=processor)
 
-valid_provider_MRI = DataProvider(valid_list_MRI, [org_suffix],
+valid_provider_T1 = DataProvider(valid_list_T1, [org_suffix],
+                        is_pre_load=False,
+                        # temp_dir=output_path,
+                        processor=processor)
+
+train_provider_T2 = DataProvider(train_list_T2, [org_suffix],
+                        is_pre_load=False,
+                        is_shuffle=True,
+                        # temp_dir=output_path,
+                        processor=processor)
+
+valid_provider_T2 = DataProvider(valid_list_T2, [org_suffix],
                         is_pre_load=False,
                         # temp_dir=output_path,
                         processor=processor)
 
 
 
-train_provider_CT_t_w = DataProvider(train_list_CT, [org_suffix, lab_suffix],
+train_provider_T1_t_w = DataProvider(train_list_T1, [org_suffix, lab_suffix],
                                    is_pre_load=False,
                                    is_shuffle=True,
                                    # temp_dir=output_path,
                                    processor=processor_no_p,
                                 is_aug=False)
 
-train_provider_CT_w = DataProvider(train_list_CT, [org_suffix],
+train_provider_T1_w = DataProvider(train_list_T1, [org_suffix],
                                  is_pre_load=False,
                                  is_shuffle=True,
                                  # temp_dir=output_path,
                                  processor=processor_no_p,
                                    is_aug=False)
 
-train_provider_MRI_w = DataProvider(train_list_MRI, [org_suffix],
+train_provider_T2_w = DataProvider(train_list_T2, [org_suffix],
                                   is_pre_load=False,
                                   is_shuffle=True,
                                   # temp_dir=output_path,
@@ -140,27 +153,30 @@ model = GANModel([gen, disc], org_suffix, lab_suffix, g_alpha=g_alpha, g_lambda=
 gen_lr = StepDecayLearningRate(learning_rate=learning_rate,
                            decay_step=10,
                            decay_rate=0.8,
-                           data_size=train_provider_CT.size + train_provider_MRI.size,
+                           data_size=train_provider_T1.size + train_provider_T2.size,
                            batch_size=batch_size)
 disc_lr = StepDecayLearningRate(learning_rate=learning_rate,
                            decay_step=10,
                            decay_rate=0.8,
-                           data_size=train_provider_CT.size + train_provider_MRI.size,
+                           data_size=train_provider_T1.size + train_provider_T2.size,
                            batch_size=batch_size)
 gen_optimizer = tf.keras.optimizers.Adam(gen_lr)
 disc_optimizer = tf.keras.optimizers.Adam(disc_lr)
 trainer = Trainer(model)
 
-# train
-results = trainer.train(train_provider_CT, train_provider_MRI, valid_provider_CT, valid_provider_MRI, train_provider_CT_t, valid_provider_CT_t,
-                        train_provider_CT_w, train_provider_MRI_w,train_provider_CT_t_w,
-                        epochs=epochs,
-                       batch_size=batch_size,
-                       mini_batch_size=mini_batch_size,
-                       output_path=output_path,
-                       optimizer=[gen_optimizer, disc_optimizer],
-                       learning_rate=[gen_lr, disc_lr],
-                       eval_frequency=eval_frequency)
+
+#   # train
+results = trainer.train(train_provider_T1, train_provider_T2, valid_provider_T1, valid_provider_T2, train_provider_T1_t, valid_provider_T1_t,
+                          train_provider_T1_w, train_provider_T2_w,train_provider_T1_t_w,
+                          epochs=epochs,
+                        batch_size=batch_size,
+                        mini_batch_size=mini_batch_size,
+                        output_path=output_path,
+                        optimizer=[gen_optimizer, disc_optimizer],
+                        learning_rate=[gen_lr, disc_lr],
+                        eval_frequency=eval_frequency)
+
+
 
 # eval
 test_provider = DataProvider(test_list, [org_suffix, lab_suffix],
@@ -184,8 +200,8 @@ trainer.restore(output_path + '/ckpt/final')
 stop = timeit.default_timer()
 
 print('Time: ', stop - start)
-# trainer.restore(output_path + '/ckpt/final')
-#data_dict = test_provider(50)
+trainer.restore(output_path + '/ckpt/final')
+data_dict = test_provider(50)
 
 
 from PIL import Image

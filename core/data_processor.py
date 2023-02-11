@@ -94,7 +94,8 @@ class SimpleImageProcessor(Processor):
                     'rgb2gray': M.rgb2gray,
                     'resize2d': M.resize2d,
                     'resize3d': M.resize3d,
-                    'channelcheck': M.channel_check
+                    'channelcheck': M.channel_check,
+                    'min_max_sample': M.min_max_sample
                     #TODO new method add here
         }
 

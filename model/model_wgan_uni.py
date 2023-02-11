@@ -27,10 +27,13 @@ class GANModel(Model):
         data_dict = U.dict_concat(data_dict_CT, data_dict_MRI)
         xs = data_dict[self._x_suffix]
         ys = data_dict[self._x_suffix]
+        
         labs = feed_dict_CT_lab[self._y_suffix]
         labs[labs == -1] = 0
-
-
+        print("Xs:", xs.shape)
+        print("Ys:", ys.shape)
+        # print(xs == ys)
+        
 
         x_CT = feed_dict_CT_lab[self._x_suffix]
         x_MRI = data_dict_MRI[self._x_suffix]
@@ -187,13 +190,23 @@ class GANModel(Model):
         # pred = np.reshape (pred, [1, pred.shape[0], pred.shape[1], pred.shape[2], pred.shape[3]])
         # ys = np.reshape (ys, [1, ys.shape[0], ys.shape[1], ys.shape[2], ys.shape[3]])
 
+        print("Pred:", pred.shape)
+        print("YS:", ys.shape)
+        print("Pred_:", pred_.shape)
+        print("YS_:", ys_.shape)
 
-        dice = EM.dice_coefficient(pred, ys, ignore_nan=True)
-        precision = EM.precision(pred, ys)
-        recall = EM.recall(pred, ys)
-        iou = EM.iou(pred, ys)
+        # dice = EM.dice_coefficient(pred, ys, ignore_nan=True)
+        # precision = EM.precision(pred, ys)
+        # recall = EM.recall(pred, ys)
+        # iou = EM.iou(pred, ys)
+        # # HDA = EM.hda(pred, ys)
+        # assd = EM.assd_(pred, ys)
+        dice = EM.dice_coefficient(pred_, ys_, ignore_nan=True)
+        precision = EM.precision(pred_, ys_)
+        recall = EM.recall(pred_, ys_)
+        iou = EM.iou(pred_, ys_)
         # HDA = EM.hda(pred, ys)
-        assd = EM.assd_(pred, ys)
+        # assd = EM.assd_(pred_, ys_)
 
         # p1 = np.argmax(pred, -1)
         # l1 = np.argmax(ys, -1)
@@ -208,7 +221,7 @@ class GANModel(Model):
                         'iou': iou,
                         # 'HD' : HDA,
                         # 'assd': surface_distance_result[...,1]
-            'assd' : assd
+            # 'assd' : assd
                         }
         return eval_results
     def predict(self, data_dict):
@@ -225,7 +238,7 @@ class GANModel(Model):
         return tf.reduce_mean(sub_res)
 
     def _get_gen_loss(self, disc_gen_logits, gen_logits, ys, o_seg, labs):
-        weight_map = np.zeros((tf.shape(ys)[0], tf.shape(ys)[1], tf.shape(ys)[2], tf.shape(ys)[3]), dtype=np.float)
+        weight_map = np.zeros((tf.shape(ys)[0], tf.shape(ys)[1], tf.shape(ys)[2], tf.shape(ys)[3]), dtype=float)
         labs[labs == -1] = 0
         gen_loss = -tf.reduce_mean(disc_gen_logits)
 
@@ -235,9 +248,11 @@ class GANModel(Model):
 
         i = 0
         for io in range(0, tf.shape(ys)[0], 1):
-              weight_map[i, :] = tf.where(ys[i, :] < 0, 1 - (count_c1[io] / (count_c1[io] + count_c2[io])),
+            # print("CountC1[IO]:", count_c1[io])
+            # print("CountC2[IO]:", count_c2[io])
+            weight_map[i, :] = tf.where(ys[i, :] < 0, 1 - (count_c1[io] / (count_c1[io] + count_c2[io])),
                                           1 - (count_c2[io] / (count_c1[io] + count_c2[io])))
-              i = i + 1
+            i = i + 1
         l1_loss = tf.reduce_mean(
             tf.compat.v1.losses.mean_squared_error(labels=ys, predictions=gen_logits, weights = weight_map))
 

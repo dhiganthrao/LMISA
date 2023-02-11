@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import scipy.ndimage as nd
 from scipy import ndimage
-# import pydensecrf.densecrf as dcrf
-# from pydensecrf.utils import create_pairwise_gaussian, create_pairwise_bilateral
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import create_pairwise_gaussian, create_pairwise_bilateral
 import random
 
 # Normalization---------------------------------------
@@ -13,7 +13,10 @@ def min_max(x, min, max):
 
 def zero_mean(x):
     # x = np.clip(x, 0, 800)
-    _x = (x - np.mean(x)) / np.std(x)
+    if np.std(x) == 0:
+        _x = (x - np.mean(x)) / (np.std(x) + 0.0000001)
+    else:
+        _x = (x - np.mean(x)) / np.std(x)
     return _x
 
 def median_mean(x):
@@ -111,3 +114,11 @@ def dencecrf(x, y, nlabels, w1, w2, alpha, beta, gamma, iteration=5):
 # ----------------------------------------------------
 
 
+def min_max_sample(x):
+    # print(np.min(x))
+    # print("Max:" , np.max(x))
+    if (np.max(x) - np.min(x)) == 0:
+        _x = (x - np.min(x)) / (np.max(x) - np.min(x) + 0.0000001) 
+    else:
+        _x = (x - np.min(x)) / (np.max(x) - np.min(x))
+    return _x
